@@ -4,7 +4,7 @@
 DWM_DIR="$HOME/.local/src/dwm"
 ST_DIR="$HOME/.local/src/st"
 
-# Ensure script runs as a normal user, not root
+# Ensure script is not run as root
 if [ "$EUID" -eq 0 ]; then
     echo "Please do not run this script as root."
     exit 1
@@ -12,7 +12,7 @@ fi
 
 echo "Updating system and installing dependencies..."
 sudo dnf update -y
-sudo dnf install -y git make gcc libX11-devel libXft-devel libXinerama-devel ncurses-devel 
+sudo dnf install -y git make gcc libX11-devel libXft-devel libXinerama-devel ncurses-devel xorg-x11-server-Xorg xinit xsetroot 
 
 # Create directories
 mkdir -p "$HOME/.local/src"
@@ -39,18 +39,38 @@ else
     echo "ST already installed."
 fi
 
-# Install Neovim
-echo "Installing Neovim..."
-sudo dnf install -y neovim
+# Install Neovim and Vim
+echo "Installing Neovim and Vim..."
+sudo dnf install -y neovim vim-enhanced
 
-# Install Vim
-echo "Installing Vim..."
-sudo dnf install -y vim-enhanced
-
-# Create config directories for Neovim
+# Configure Neovim
 mkdir -p "$HOME/.config/nvim"
 echo "set number" > "$HOME/.config/nvim/init.vim"
 
+# Set DWM as the default window manager
+
+echo "Setting up DWM as the default window manager..."
+
+# Create an Xsession file for DWM (for GDM, SDDM, or LightDM)
+sudo bash -c 'cat > /usr/share/xsessions/dwm.desktop' <<EOF
+[Desktop Entry]
+Name=DWM
+Comment=Dynamic Window Manager
+Exec=dwm
+Type=Application
+EOF
+
+# Set up .xinitrc for users using startx
+echo "exec dwm" > "$HOME/.xinitrc"
+chmod +x "$HOME/.xinitrc"
+
+# Set up .xsession for compatibility
+echo "exec dwm" > "$HOME/.xsession"
+chmod +x "$HOME/.xsession"
+
 # Finish
-echo "Installation complete. Restart your session to use DWM."
+echo "DWM has been set as your default window manager."
+echo "If using a display manager (GDM, SDDM), select 'DWM' from the session menu before logging in."
+echo "If using startx, simply run 'startx' to launch DWM."
+
 
